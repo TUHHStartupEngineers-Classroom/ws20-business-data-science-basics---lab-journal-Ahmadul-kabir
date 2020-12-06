@@ -28,7 +28,7 @@ Last compiled: `r Sys.Date()`
 
 ### Code
 
-```{r}
+```{r chall1}
 # Loading libraries
 
 library(tidyverse)
@@ -133,6 +133,7 @@ sales_by_location_year_tbl %>%
   
   # Set up x, y, fill
   ggplot(aes(x = year, y = sales, fill = state)) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
   
   # Geometries
   geom_col() + # Run up to here to get a stacked bar plot
@@ -152,25 +153,29 @@ sales_by_location_year_tbl %>%
     fill = "state" # Changes the legend name
   )
 
+
 ```
+
+
 ## Data Acquisition
 
 ### Code
 
 
 
-
-
-You can add more headers by adding more hashtags. These won't be put into the table of contents
-
 ## Data Wrangling
 
 ### Code
 
 
+
+
+
+
 ## Data Visualization
 
 ### code
+
 
 Here's an even lower level header
 

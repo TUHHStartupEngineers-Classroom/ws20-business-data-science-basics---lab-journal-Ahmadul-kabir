@@ -161,15 +161,389 @@ sales_by_location_year_tbl %>%
 
 ### Code
 
+1.
+
+```{r chall2a, eval=FALSE}
+response <- GET("https://api.weatherapi.com/v1/forecast.json?key=4dc64ec537e245f58c733403200312&q=Hamburg&days=2")
+response
+
+rawToChar(response$content)
+
+response1 <- content(response)
+
+response1
+
+resp <- pluck(response1, 2)
+resp
+
+#as_tibble(resp)
+result <- as_tibble(resp)
+result
+
+result_3a <- result
+write_rds(result_3a,"C:/SPB_Data/lab_journal_website/ws20-business-data-science-basics---lab-journal-Ahmadul-kabir/rds_file/result3a.rds")
+
+```
+
+```{r result2a}
+library(readr)
+library(data.table)
+result_3a <- read_rds("C:/SPB_Data/lab_journal_website/ws20-business-data-science-basics---lab-journal-Ahmadul-kabir/rds_file/result3a.rds")
+result_3a
+```
+
+2.
+
+```{r chall2b, eval=FALSE}
+library(tidyverse) # Main Package - Loads dplyr, purrr, etc.
+library(rvest)     # HTML Hacking & Web Scraping
+library(xopen)     # Quickly opening URLs
+library(jsonlite)  # converts JSON files to R objects
+library(glue)      # concatenate strings
+library(stringi)   # character string/text processing
+
+url_home          <- "https://www.rosebikes.de/fahrr%C3%A4der/rennrad"
+xopen(url_home) # Open links directly from RStudio to inspect them
+
+# Read in the HTML for the entire webpage
+html_home         <- read_html(url_home)
+
+# Web scraping the bike models 
+bike_model <- html_home %>% 
+  
+  html_nodes(css = ".catalog-category-bikes__title-text") %>% 
+  html_text() %>%
+  
+  str_remove_all("\n") 
+  
+bike_model
+
+# scraping bike prices
+
+bike_price <- html_home %>%
+  
+  html_nodes(css = ".catalog-category-bikes__price-title") %>%
+  html_text() %>%
+  
+  str_remove_all("\\.") %>%
+  stringr::str_replace_all(pattern = "\nab ", replacement = "") %>%
+  stringr::str_replace_all(pattern = "\n", replacement = "") 
+  
+bike_price
+
+# merging the two tables into one
+
+result_3b <- tibble(bike_model, bike_price)
+result_3b
+
+write_rds(result_3b, "C:/SPB_Data/lab_journal_website/ws20-business-data-science-basics---lab-journal-Ahmadul-kabir/rds_file/result3b.rds")
+
+```
+
+```{r result2b}
+library(readr)
+library(data.table)
+result_3b <- read_rds("C:/SPB_Data/lab_journal_website/ws20-business-data-science-basics---lab-journal-Ahmadul-kabir/rds_file/result3b.rds")
+result_3b
+
+```
 
 
 ## Data Wrangling
 
 ### Code
 
+1.
+
+```{r chall3a, eval=FALSE}
+library(tidyverse)
+library(vroom)
+
+# Data Table
+library(data.table)
+
+# Counter
+library(tictoc)
+
+# importing assignee data
+
+col_types_assignee <- list(
+  id = col_character(),
+  type = col_character(),
+  name_first = col_character(),
+  name_last = col_character(),
+  organization = col_character()
+)
+
+assignee_tbl <- vroom(
+  file       = "C:/SPB_Data/lab_journal_website/00_data/_patent_data/_raw_data/assignee.tsv", 
+  delim      = "\t", 
+  col_types  = col_types_assignee,
+  na         = c("", "NA", "NULL")
+)
+
+# converting to a data table
+assignee_data_frame <- as.data.table(assignee_tbl %>% rename(assignee_id = id))
+
+assignee_data_frame %>% glimpse()
+
+# importing patent assignee data
+
+col_types_patent_assignee <- list(
+  patent_id = col_character(),
+  assignee_id = col_character(),
+  location_id = col_character()
+)
+
+patent_assignee_tbl <- vroom(
+  file       = "C:/SPB_Data/lab_journal_website/00_data/_patent_data/_raw_data/patent_assignee.tsv", 
+  delim      = "\t", 
+  col_types  = col_types_patent_assignee,
+  na         = c("", "NA", "NULL")
+)
+
+# converting it to a data table
+
+patent_assignee_data_frame <- as.data.table(patent_assignee_tbl)
+
+patent_assignee_data_frame %>% glimpse()
+
+# merging data( assignee and patent assignee)
+
+tic()
+combined_data <- merge(x = assignee_data_frame, y = patent_assignee_data_frame, 
+                       by    = "assignee_id", 
+                       all.x = TRUE, 
+                       all.y = FALSE)
+toc()
+
+combined_data %>% glimpse()
+
+top_ten <- combined_data %>%
+  
+  filter(!is.na(type) & type == 2) %>%
+  group_by(organization, type) %>%
+  tally(sort = T) %>%
+  ungroup() %>%
+  arrange(desc(n))
+
+top_ten
+
+result_4a <- top_ten
+result_4a
+
+write_rds(result_4a, "C:/SPB_Data/lab_journal_website/ws20-business-data-science-basics---lab-journal-Ahmadul-kabir/rds_file/result4a.rds")
+
+```
+
+```{r result3a}
+library(readr)
+library(data.table)
+result_4a <- read_rds("C:/SPB_Data/lab_journal_website/ws20-business-data-science-basics---lab-journal-Ahmadul-kabir/rds_file/result4a.rds")
+result_4a
+
+```
+
+2 & 3.
+
+```{r chall3b&3c, eval=FALSE}
+library(tidyverse)
+library(vroom)
+
+# Data Table
+library(data.table)
+
+# Counter
+library(tictoc)
+
+# challange part 1
+# importing assignee data
+
+col_types_assignee <- list(
+  id = col_character(),
+  type = col_character(),
+  organization = col_character()
+)
+
+assignee_tbl <- vroom(
+  file       = "C:/SPB_Data/lab_journal_website/00_data/_patent_data/Patent_data_reduced/assignee.tsv", 
+  delim      = "\t", 
+  col_types  = col_types_assignee,
+  na         = c("", "NA", "NULL")
+)
+
+# converting to a data table
+assignee_data_frame <- as.data.table(assignee_tbl %>% rename(assignee_id = id))
+
+assignee_data_frame %>% glimpse()
+
+# importing patent assignee data
+
+col_types_patent_assignee <- list(
+  patent_id = col_character(),
+  assignee_id = col_character()
+  
+)
+
+patent_assignee_tbl <- vroom(
+  file       = "C:/SPB_Data/lab_journal_website/00_data/_patent_data/Patent_data_reduced/patent_assignee.tsv", 
+  delim      = "\t", 
+  col_types  = col_types_patent_assignee,
+  na         = c("", "NA", "NULL")
+)
+
+# converting it to a data table
+
+patent_assignee_data_frame <- as.data.table(patent_assignee_tbl)
+
+patent_assignee_data_frame %>% glimpse()
+
+# merging data( assignee and patent assignee)
+
+tic()
+combined_data <- merge(x = assignee_data_frame, y = patent_assignee_data_frame, 
+                       by    = "assignee_id", 
+                       all.x = TRUE, 
+                       all.y = FALSE)
+toc()
+
+combined_data %>% glimpse()
+
+# Answer to patent dominance question
+top_ten <- combined_data %>%
+  
+  filter(!is.na(type) & type == 2) %>%
+  group_by(organization, type) %>%
+  tally(sort = T) %>%
+  ungroup() %>%
+  arrange(desc(n))
+
+top_ten
+
+# challenge part 2
+# importing the reduced patent data
+
+col_types_patent <- list(
+  id = col_character(),
+  date = col_date("%Y-%m-%d"),
+  num_claims = col_double()
+  
+)
+
+patent_tbl <- vroom(
+  file       = "C:/SPB_Data/lab_journal_website/00_data/_patent_data/Patent_data_reduced/patent.tsv", 
+  delim      = "\t", 
+  col_types  = col_types_patent,
+  na         = c("", "NA", "NULL")
+)
+
+patent_tbl
+
+# converting to data frame
+
+patent_data_frame <- as.data.table(patent_tbl %>% rename(patent_id = id)) 
+  
+  
+patent_data_frame %>% glimpse()
+
+# merging data( assignee and patent assignee and patent)
+
+tic()
+combined_new_data <- merge(x = combined_data, y = patent_data_frame, 
+                           by    = "patent_id", 
+                           all.x = TRUE, 
+                           all.y = FALSE)
+toc()
+
+combined_new_data %>% glimpse()
+
+#manipulating data
+
+merged_data <- combined_new_data %>%
+  
+  select(organization, date, type) %>%
+  mutate(year = year(date)) %>%
+  filter(year == 2014)
+
+merged_data %>% glimpse()
+
+# Answer to recent patent activity question
+
+top_ten_new <- merged_data %>%
+  
+  filter(!is.na(type) & type == 2) %>%
+  group_by(organization, type, year) %>%
+  tally(sort = T) %>%
+  ungroup() %>%
+  arrange(desc(n))
+
+top_ten_new
+
+# challange part 3
+# importing uspc data
+
+col_types_uspc <- list(
+  patent_id = col_character(),
+  mainclass_id = col_character(),
+  sequence = col_character()
+)
+
+uspc_tbl <- vroom(
+  file       = "C:/SPB_Data/lab_journal_website/00_data/_patent_data/Patent_data_reduced/uspc.tsv", 
+  delim      = "\t", 
+  col_types  = col_types_uspc,
+  na         = c("", "NA", "NULL")
+)
+
+# converting to a data table
+uspc_data_frame <- as.data.table(uspc_tbl)
+
+uspc_data_frame %>% glimpse()
+
+# # merging data( assignee and patent assignee and uspc)
+
+tic()
+combined_newest_data <- merge(x = combined_data, y = uspc_data_frame, 
+                       by    = "patent_id", 
+                       all.x = TRUE, 
+                       all.y = FALSE)
+toc()
+
+combined_newest_data %>% glimpse()
+
+# top 5 USPTO tech main classes from the companies worldwide
+
+top_ten_worldwide <- combined_newest_data %>%
+  
+  select(organization, type, mainclass_id, sequence) %>%
+  filter(sequence == 0) %>%
+  group_by( mainclass_id) %>%
+  tally(sort = T) %>%
+  ungroup() %>%
+  arrange(desc(n))
 
 
+top_ten_worldwide
 
+result_4b <- top_ten_new
+
+write_rds(result_4b, "C:/SPB_Data/lab_journal_website/ws20-business-data-science-basics---lab-journal-Ahmadul-kabir/rds_file/result4b.rds")
+
+result_4c <- top_ten_worldwide
+
+write_rds(result_4c, "C:/SPB_Data/lab_journal_website/ws20-business-data-science-basics---lab-journal-Ahmadul-kabir/rds_file/result4c.rds")
+
+```
+
+```{r result3b&3c}
+library(readr)
+library(data.table)
+result_4b <- read_rds("C:/SPB_Data/lab_journal_website/ws20-business-data-science-basics---lab-journal-Ahmadul-kabir/rds_file/result4b.rds")
+result_4b
+result_4c <- read_rds("C:/SPB_Data/lab_journal_website/ws20-business-data-science-basics---lab-journal-Ahmadul-kabir/rds_file/result4c.rds")
+result_4c
+
+```
 
 
 ## Data Visualization
